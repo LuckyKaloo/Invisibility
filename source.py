@@ -3,7 +3,8 @@ import numpy as np
 
 class ShapeSource:
     def generate_pos(self):
-        pass
+        # pass
+        raise NotImplementedError("To be implemented in subclass")
 
 
 class RectangleSource(ShapeSource):
