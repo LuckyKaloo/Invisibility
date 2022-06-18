@@ -165,7 +165,7 @@ if __name__ == "__main__":
                                                                    tf.convert_to_tensor(camera.camera_pinhole.r))
 
         theta_min, theta_max = lenticular_lens.angle_bounds_theta(initial_pos)
-        weight = (phi_max - phi_min) * (theta_max - theta_min) / 0.07
+        weight = (phi_max - phi_min) * (theta_max - theta_min) / 0.007
         stacked = tf.stack([*tf.unstack(initial_pos, axis=-1), phi_max, phi_min, theta_max, theta_min, weight], axis=-1)
 
         stacked = tf.gather(stacked, tf.where(weight >= 0), axis=0)
@@ -175,36 +175,35 @@ if __name__ == "__main__":
         start_time = time.time()
         j = 0
 
-        rolling_df = pd.DataFrame(data=None, columns=["weight", "intersect", "xo", "yo", "xf", "yf"])
+        rolling_arr = np.zeros(shape=(1, 5), dtype="float32")
 
         # with tf.io.TFRecordWriter(f"out_{i}.tfrecord") as writer:
-        with (pbar := tqdm(total=NUM_TO_PASS)):
-            while s.numpy() < NUM_TO_PASS:
-                batch = batched[j]
-                _x, _y, _z, *args, weight = tf.unstack(batch, axis=-1)
-                intersect, full_arr = ray_trace(tf.concat((_x, _y, _z), axis=-1), *args, camera, lenticular_lens)
-                weight = tf.repeat(weight, 8796, axis=0)
-                intersect = tf.expand_dims(intersect, -1)
-                rays = tf.reduce_sum(tf.cast(intersect, tf.float32) * weight)
-                s += rays
-                # j += 1
-                # np.save(f"weight_{i}_{j}.npy", weight.numpy())
-                # np.save(f"intersect{i}_{j}.npy", intersect.numpy())
-                # np.save(f"full_arr{i}_{j},npy", full_arr.numpy())
-                # print(intersect.shape)
-                # print(tf.reduce_max(full_arr * tf.cast(tf.expand_dims(intersect, -1), tf.float32)))
-                data = np.hstack([weight.numpy(), intersect.numpy(), full_arr.numpy()])
-                df = pd.DataFrame(data=data, columns=["weight", "intersect", "xo", "yo", "xf", "yf"])
-                df = df[df["intersect"] == True]
-                df.drop("intersect", axis="columns")
+        with open("out.csv", mode='a') as f:
+            with (pbar := tqdm(total=NUM_TO_PASS)):
+                while s.numpy() < NUM_TO_PASS:
+                    batch = batched[j]
+                    _x, _y, _z, *args, weight = tf.unstack(batch, axis=-1)
+                    intersect, full_arr = ray_trace(tf.concat((_x, _y, _z), axis=-1), *args, camera, lenticular_lens)
+                    weight = tf.repeat(weight, 8796, axis=0)
+                    intersect = tf.expand_dims(intersect, -1)
+                    rays = tf.reduce_sum(tf.cast(intersect, tf.float32) * weight)
+                    s += rays
+                    # j += 1
+                    # np.save(f"weight_{i}_{j}.npy", weight.numpy())
+                    # np.save(f"intersect{i}_{j}.npy", intersect.numpy())
+                    # np.save(f"full_arr{i}_{j},npy", full_arr.numpy())
+                    # print(intersect.shape)
+                    # print(tf.reduce_max(full_arr * tf.cast(tf.expand_dims(intersect, -1), tf.float32)))
+                    data = np.hstack([weight.numpy(), full_arr.numpy()])
+                    data = data[np.squeeze(intersect.numpy())]
 
-                if rolling_df.shape[0] > 10**6:
-                    df.to_csv("out.csv", mode="a", header=not os.path.exists("out.csv"), float_format="%.4f")
-                    rolling_df = df
-                else:
-                    rolling_df = pd.concat([rolling_df, df])
-                # writer.write(serialize(weight, intersect, full_arr))
-                pbar.update(rays.numpy())
+                    if rolling_arr.shape[0] > 10**6:
+                        np.savetxt(f, rolling_arr, delimiter=",", fmt="%.4f")
+                        rolling_arr = data
+                    else:
+                        rolling_arr = np.vstack([rolling_arr, data])
+                    # writer.write(serialize(weight, intersect, full_arr))
+                    pbar.update(rays.numpy())
 
                 j += 1
         print(time.time()-start_time)
