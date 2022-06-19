@@ -2,6 +2,7 @@ import tensorflow as tf
 from tqdm import tqdm
 import numpy as np
 
+from tf_sim.blocker import RectangleBlocker
 from tf_sim.camera import Camera
 from tf_sim.lens import LenticularLens
 from tf_sim.source import RectangleSource
@@ -18,13 +19,13 @@ def _gaussian_kernel(kernel_size, sigma, n_channels, dtype):
 
 @tf.function
 def apply_blur(img):
-    blur = _gaussian_kernel(3, 2, 1, img.dtype)
+    blur = _gaussian_kernel(9, 5, 1, img.dtype)
     img = tf.nn.conv2d(img, blur, [1, 1, 1, 1], 'SAME')
     return img
 
 
 class RayTracer:
-    def __init__(self, config: dict, lens=None, camera=None, source=None):
+    def __init__(self, config: dict, lens=None, camera=None, source=None, blocker=None):
         """
         Initializes raytracer with custom objects
 
@@ -57,10 +58,20 @@ class RayTracer:
             else:
                 source = RectangleSource(**source_config)
 
+        if blocker is None:
+            if "blocker" in config.keys():
+                blocker_config = config["blocker"]
+                if "class" in blocker_config.keys():
+                    blocker_class = blocker_config.pop("class")
+                    blocker = blocker_class(**blocker_config)
+                else:
+                    blocker = RectangleBlocker(**blocker_config)
+
         self.config = config
         self.lens = lens
         self.camera = camera
         self.source = source
+        self.blocker = blocker
 
     @tf.function
     def trace_for_rays(self):
@@ -114,12 +125,18 @@ class RayTracer:
 
         initial_vec = tf.reshape(initial_vec, (n * self.config["rays_per_pos"], 3))
 
+        # so the thing doesn't die
+        initial_vec = initial_vec - 1e-8 * (tf.sign(initial_vec) + 1) * (tf.sign(initial_vec) - 1)
+
         initial_pos = tf.repeat(initial_pos, (self.config["rays_per_pos"]), axis=0)
 
         pos_out, vec_out, intersect = self.lens.refract(initial_pos, initial_vec)
 
         c_intersect, arr = self.camera.projection(pos_out, vec_out)
-        intersect = tf.logical_and(intersect, c_intersect)
+        intersect = intersect * tf.cast(c_intersect, tf.float32)
+
+        if self.blocker is not None:
+            intersect = intersect * tf.cast(not self.blocker.blocks(initial_pos), tf.float32)
 
         full_arr = tf.concat([
             initial_pos[:, :2],
@@ -130,7 +147,7 @@ class RayTracer:
 
         intersect = tf.expand_dims(intersect, -1)
 
-        n_rays = tf.reduce_sum(weight * tf.cast(intersect, tf.float32))
+        n_rays = tf.reduce_sum(weight * intersect)
 
         return full_arr, intersect, weight, n_rays
 
@@ -139,13 +156,13 @@ class RayTracer:
         _, h, w, _ = pdf.shape
         full_arr, intersect, weight, n_rays = self.trace_for_rays()
         binned = tf.cast(tf.math.floordiv(full_arr[:, 2:4] + self.lens.w / 2,
-                                          self.lens.w / self.lens.w), tf.int32)
+                                          self.lens.w / h), tf.int32)
         # todo change this if lens is not square
 
         binned = binned[2] + binned[3] * h
         binned = tf.concat([binned, tf.range(h ** 2, dtype=tf.int32)], axis=0)
         values = tf.concat([
-            weight * tf.cast(intersect, tf.float32),
+            weight * intersect,
             tf.zeros(shape=(h ** 2, 1), dtype=tf.float32)
         ], axis=0)
         # todo this might become very slow for larger images

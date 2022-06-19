@@ -73,6 +73,7 @@ class LenticularLens:
         num = tf.math.ceil((x1 - xi) / self.p)  # number of lenticules to move the actual ray to the right
 
         xf = xi + num * self.p  # final x coordinate of intersection of moved ray with x-axis
+        # tf.print(tf.reduce_sum(xf), tf.reduce_sum(m), tf.reduce_sum(zi))
 
         # intersection of ray with lenticular lens
         root = tf.sqrt(m * m * (self.R - xf) * (self.R + xf) - self.f * self.f - 2 * m * xf * (self.R + self.zo - zi) -
@@ -90,12 +91,14 @@ class LenticularLens:
             tf.zeros(shape=(n,)),
             self.zo - self.f + self.R - pos_in[:, 2]
         ], axis=-1)
+
         n_vec_in = n_vec_in / tf.norm(n_vec_in, axis=-1, keepdims=True)
 
         # dot_in = tf.reduce_sum(n_vec_in * vec, axis=-1)
         # vec_in = tf.expand_dims(tf.sqrt(1 - self.mu * self.mu * (1 - dot_in * dot_in)), axis=-1) * n_vec_in + \
         #          self.mu * (vec - tf.expand_dims(dot_in, axis=-1) * n_vec_in)
         dot_in = tf.reduce_sum(n_vec_in * vec, axis=-1)
+
         theta_f_root = tf.sqrt(1 - self.mu * self.mu * (1 - dot_in * dot_in))
 
         weights_1 = 1 - (tf.pow((dot_in - self.n * theta_f_root) / (dot_in + self.n * theta_f_root), 2)
@@ -109,12 +112,12 @@ class LenticularLens:
         dot_out = vec_in[:, 2]
         root = 1 - self.n * self.n * (1 - dot_out * dot_out)
 
-        vec_out = (tf.expand_dims(tf.sqrt(root), -1) * n_vec_out +
+        vec_out = (tf.expand_dims(tf.sqrt(tf.nn.relu(root)), -1) * n_vec_out +
                    self.n * (vec_in - tf.expand_dims(dot_out, -1) * n_vec_out))
 
         pos_out = pos_in + vec_in * tf.expand_dims((self.zo + self.t - self.f - pos_in[:, 2]) / vec_in[:, 2], -1)
 
-        return pos_out, vec_out, root >= 0
+        return pos_out, vec_out, tf.cast(root >= 0, tf.float32) * weights_1
 
     @tf.function
     def calc_m(self, yo, zo, yp, zp, r):

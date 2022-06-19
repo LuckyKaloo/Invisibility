@@ -13,6 +13,7 @@ import numpy as np
 from tqdm import tqdm
 import tensorflow as tf
 
+from tf_sim.blocker import RectangleBlocker
 from tf_sim.camera import Camera
 from tf_sim.lens import LenticularLens
 from tf_sim.raytracer import RayTracer
@@ -44,10 +45,18 @@ def main():
     source_config = {
         "class": RectangleSource,
         "x": 0,
-        "y": 0.1,
+        "y": 0.0,
         "z": 0,
         "w": 0.8,
         "h": 0.5
+    }
+    blocker_config = {
+        "class": RectangleBlocker,
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0,
+        "w": 0.15,
+        "h": 0.05,
     }
     config = {
         "batch_size": 1000,
@@ -55,9 +64,10 @@ def main():
         "average_steradians": 0.007,
         "lens": lens_config,
         "camera": camera_config,
-        "source": source_config
+        "source": source_config,
+        "blocker": blocker_config
     }
-    NUM_TO_PASS = 10 ** 8
+    NUM_TO_PASS = 10 ** 7
 
     IMG_RESOLUTION = 128
 
@@ -71,6 +81,11 @@ def main():
             pdf, n_rays = raytracer.trace_for_pdf(pdf)
             s += n_rays
             pbar.update(n_rays.numpy())
+            if not tf.math.is_finite(n_rays).numpy():
+                print("i dont like this")
+
+    img = tf.io.encode_png(tf.reshape(tf.cast(pdf / tf.reduce_max(pdf) * 256, tf.uint8), (IMG_RESOLUTION, IMG_RESOLUTION, 1)))
+    tf.io.write_file("out.png", img)
 
 
 if __name__ == "__main__":
