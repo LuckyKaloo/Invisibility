@@ -20,12 +20,26 @@ class RectangleSource(Source):
         :param w: width of plane (float)
         :param h: height of plane (float)
         """
+        self.x = x
+        self.y = y
+        self.z = z
+        self.w = w
+        self.h = h
 
         self.x_min = x - w / 2
         self.x_max = x + w / 2
         self.y_min = y - h / 2
         self.y_max = y + h / 2
         self.z = float(z)
+
+    def get_config(self):
+        return {
+            "x": self.x,
+            "y": self.y,
+            "z": self.z,
+            "w": self.w,
+            "h": self.h
+        }
 
     @tf.function
     def generate_pos(self, n_batches):

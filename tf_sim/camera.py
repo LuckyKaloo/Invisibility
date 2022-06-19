@@ -27,11 +27,18 @@ class Pinhole:
         :param vec_ray: (n, 3) tensor n is batch size
         :return: (n,) tensor, whether each ray intersects with pinhole
         """
-        final_pos = pos_ray + vec_ray * (self.pos[2] - tf.expand_dims(pos_ray[:, 2], axis=-1)) / tf.expand_dims(vec_ray[:, 2], axis=-1)
+        final_pos = pos_ray + vec_ray * (self.pos[2] - tf.expand_dims(pos_ray[:, 2], axis=-1)) / tf.expand_dims(
+            vec_ray[:, 2], axis=-1)
         d_vec = final_pos - self.pos
         d = tf.linalg.norm(d_vec, axis=-1)
 
         return d > self.r
+
+    def get_config(self):
+        return {
+            "pos": self.pos,
+            "r": self.r
+        }
 
 
 class Camera:
@@ -45,12 +52,17 @@ class Camera:
         :param f_number: idk what this is
         :param focal_length: self-explanatory
         """
+        self.z_camera = z_camera
+        self.camera_radius = camera_radius
+        self.z_pupil = z_pupil
+        self.f_number = f_number
+        self.focal_length = focal_length
+
         self.pupil_radius = focal_length / (2 * f_number)
 
         # self.thin_lens = ThinLens(0, 0, z_camera + z0, lens_radius, focal_length, n)
         self.pupil_pinhole = Pinhole([0, 0, z_camera + z_pupil], self.pupil_radius)
         self.camera_pinhole = Pinhole([0, 0, z_camera], camera_radius)
-
 
     def projection(self, ray_pos, ray_vec):
         """
@@ -61,11 +73,18 @@ class Camera:
         :return: x, y position if ray intersects
         """
         return (not self.pupil_pinhole.blocks(ray_pos, ray_vec)), ray_pos[:, :2]
-        # todo idk what the intended behaviour is
+
+    def get_config(self):
+        return {
+            "z_camera": self.z_camera,
+            "camera_radius": self.camera_radius,
+            "z_pupil": self.z_pupil,
+            "f_number": self.f_number,
+            "focal_length": self.focal_length
+        }
 
 
 # testing
-if __name__ == "__main__":
-    c = Camera(0, 1, 1, 1, 1)
-    print(c.projection(tf.random.uniform(shape=(10, 3)), tf.random.uniform(shape=(10, 3))))
-
+# if __name__ == "__main__":
+#     c = Camera(0, 1, 1, 1, 1)
+#     print(c.projection(tf.random.uniform(shape=(10, 3)), tf.random.uniform(shape=(10, 3))))
