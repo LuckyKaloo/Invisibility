@@ -42,23 +42,20 @@ class Pinhole:
 
 
 class Camera:
-    def __init__(self, z_camera, camera_radius, z_pupil, f_number, focal_length):
+    def __init__(self, z_camera, camera_radius, z_pupil, pupil_radius):
         """
         Creates a camera
 
         :param z_camera: z position
         :param camera_radius: self-explanatory
         :param z_pupil: distance to the pupil (whatever that is)
-        :param f_number: idk what this is
-        :param focal_length: self-explanatory
+        :param pupil_radius: self-explanatory
         """
         self.z_camera = z_camera
         self.camera_radius = camera_radius
         self.z_pupil = z_pupil
-        self.f_number = f_number
-        self.focal_length = focal_length
 
-        self.pupil_radius = focal_length / (2 * f_number)
+        self.pupil_radius = pupil_radius
 
         # self.thin_lens = ThinLens(0, 0, z_camera + z0, lens_radius, focal_length, n)
         self.pupil_pinhole = Pinhole([0, 0, z_camera + z_pupil], self.pupil_radius)
@@ -79,8 +76,7 @@ class Camera:
             "z_camera": self.z_camera,
             "camera_radius": self.camera_radius,
             "z_pupil": self.z_pupil,
-            "f_number": self.f_number,
-            "focal_length": self.focal_length
+            "pupil_radius": self.pupil_radius
         }
 
 

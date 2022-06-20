@@ -30,7 +30,7 @@ def main():
         "zo": 0.3,
         "w": 0.09,
         "h": 0.09,
-        "R": p_standard / 0.2,
+        "R": p_standard / 1.5,
         "p": p_standard,
         "t": p_standard * 2,
         "n": 1.6357
@@ -40,8 +40,7 @@ def main():
         "z_camera": 0.878,
         "camera_radius": 0.031,
         "z_pupil": 0.026,
-        "f_number": 2.8,
-        "focal_length": 0.0733
+        "pupil_radius": 0.005
     }
     source_config = {
         "class": RectangleSource,
@@ -51,47 +50,56 @@ def main():
         "w": 0.8,
         "h": 0.5
     }
+    blocker_config = {
+        "class": RectangleBlocker,
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 0.15,
+        "h": 0.05
+    }
+
     config = {
         "batch_size": 1000,
-        "rays_per_pos": int(2 * np.pi * 2 * 10**5 * 0.007),
+        "rays_per_pos": int(2 * np.pi * 2 * 10 ** 5 * 0.007),
         "average_steradians": 0.007,
         "lens": lens_config,
         "camera": camera_config,
         "source": source_config,
+        "blocker": blocker_config
     }
     NUM_TO_PASS = 10 ** 7
 
-    # IMG_RESOLUTION = 128
+    IMG_RESOLUTION = 32
 
     raytracer = RayTracer(config=config)
 
-    rolling_arr = np.zeros(shape=(1, 5), dtype="float32")
+    # rolling_arr = np.zeros(shape=(1, 5), dtype="float32")
 
     s = tf.constant(0.0)
-    # pdf = tf.zeros(shape=(1, IMG_RESOLUTION, IMG_RESOLUTION, 1))
-    with open("out.csv", mode='w') as f:
+    pdf = tf.zeros(shape=(1, IMG_RESOLUTION, IMG_RESOLUTION, 1))
+    with open("out_18.csv", mode='w') as f:
         with (pbar := tqdm(total=NUM_TO_PASS)):
             while s.numpy() < NUM_TO_PASS:
-                full_arr, weight, n_rays = raytracer.trace_for_rays()
+                # full_arr, weight, n_rays = raytracer.trace_for_rays()
+                pdf, n_rays = raytracer.trace_for_pdf(pdf)
                 s += n_rays
-                data = np.hstack([weight.numpy(), full_arr.numpy()])
-                data = data[np.squeeze(weight.numpy() > 0)]
-
-                if rolling_arr.shape[0] > 10**6:
-                    np.savetxt(f, rolling_arr, delimiter=",", fmt="%.4f")
-                    rolling_arr = data
-                else:
-                    rolling_arr = np.vstack([rolling_arr, data])
+                # data = np.hstack([weight.numpy(), full_arr.numpy()])
+                # data = data[np.squeeze(weight.numpy() > 0)]
+                #
+                # if rolling_arr.shape[0] > 10**6:
+                #     np.savetxt(f, rolling_arr, delimiter=",", fmt="%.4f")
+                #     rolling_arr = data
+                # else:
+                #     rolling_arr = np.vstack([rolling_arr, data])
                 pbar.update(n_rays.numpy())
-                if not tf.math.is_finite(n_rays).numpy():
-                    print("i dont like this")
 
-    # plt.imshow(tf.cast(pdf / tf.reduce_max(pdf) * 256, tf.uint8).numpy()[0])
-    # plt.show()
-    #
-    # img = tf.io.encode_png(tf.reshape(tf.cast(pdf / tf.reduce_max(pdf) * 256, tf.uint8),
-    #                                   (IMG_RESOLUTION, IMG_RESOLUTION, 1)))
-    # tf.io.write_file("out.png", img)
+    plt.imshow(tf.cast(pdf / tf.reduce_max(pdf) * 256, tf.uint8).numpy()[0])
+    plt.show()
+
+    img = tf.io.encode_png(tf.reshape(tf.cast(pdf / tf.reduce_max(pdf) * 256, tf.uint8),
+                                      (IMG_RESOLUTION, IMG_RESOLUTION, 1)))
+    tf.io.write_file("out.png", img)
 
 
 if __name__ == "__main__":

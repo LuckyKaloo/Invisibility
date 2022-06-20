@@ -17,7 +17,7 @@ def _gaussian_kernel(kernel_size, sigma, n_channels, dtype):
 
 @tf.function
 def apply_blur(img):
-    blur = _gaussian_kernel(9, 5, 1, img.dtype)
+    blur = _gaussian_kernel(1, 1, 1, img.dtype)
     img = tf.nn.conv2d(img, blur, 1, 'SAME')
     return img
 
@@ -136,7 +136,7 @@ class RayTracer:
         intersect = intersect * tf.cast(c_intersect, tf.float32)
 
         if self.blocker is not None:
-            intersect = intersect * tf.cast(not self.blocker.blocks(initial_pos), tf.float32)
+            intersect = intersect * tf.cast(tf.logical_not(self.blocker.blocks(initial_pos)), tf.float32)
 
         full_arr = tf.concat([
             initial_pos[:, :2],
@@ -154,7 +154,7 @@ class RayTracer:
     @tf.function
     def trace_for_pdf(self, pdf):
         _, h, w, _ = pdf.shape
-        full_arr, intersect, weight, n_rays = self.trace_for_rays()
+        full_arr, weight, n_rays = self.trace_for_rays()
         binned = tf.cast(tf.math.floordiv(full_arr[:, 2:4] + self.lens.w / 2,
                                           self.lens.w / h), tf.int32)
         # todo change this if lens is not square
@@ -162,7 +162,7 @@ class RayTracer:
         binned = binned[2] + binned[3] * h
         binned = tf.concat([binned, tf.range(h ** 2, dtype=tf.int32)], axis=0)
         values = tf.concat([
-            weight * intersect,
+            weight,
             tf.zeros(shape=(h ** 2, 1), dtype=tf.float32)
         ], axis=0)
         # todo this might become very slow for larger images

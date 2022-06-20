@@ -66,7 +66,7 @@ class LenticularLens:
         m = vec[:, 2] / vec[:, 0]
         v = tf.math.rsqrt(1 + m * m)
         x_tan = tf.clip_by_value(m * self.R * v, -self.p / 2, self.p / 2)
-        z_tan = self.zo + self.f + self.R - tf.sqrt(self.R * self.R - x_tan * x_tan)
+        z_tan = self.zo - self.f + self.R - tf.sqrt(self.R * self.R - x_tan * x_tan)
 
         # intersection of moved ray with x-axis
         x1 = x_tan - (z_tan - zi) / m - self.p * tf.maximum(tf.sign(m), 0.0)
@@ -76,9 +76,9 @@ class LenticularLens:
         # tf.print(tf.reduce_sum(xf), tf.reduce_sum(m), tf.reduce_sum(zi))
 
         # intersection of ray with lenticular lens
-        root = tf.sqrt(m * m * (self.R - xf) * (self.R + xf) - self.f * self.f - 2 * m * xf * (self.R + self.zo - zi) -
-                       (self.zo - zi) * (2 * self.R + self.zo - zi) + 2 * self.f * (
-                               self.R + m * xf + self.zo - zi)) * tf.sign(m)  # wtf
+        root = tf.sqrt(tf.nn.relu(m * m * (self.R - xf) * (self.R + xf) - self.f * self.f - 2 * m * xf *
+                                  (self.R + self.zo - zi) - (self.zo - zi) * (2 * self.R + self.zo - zi) +
+                                  2 * self.f * (self.R + m * xf + self.zo - zi))) * tf.sign(m)  # wtf
 
         # intersection of ray with lens, moved to primary lenticule
         x_moved = (m * (
