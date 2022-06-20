@@ -70,26 +70,37 @@ def main():
     }
     NUM_TO_PASS = 10 ** 7
 
-    IMG_RESOLUTION = 128
+    # IMG_RESOLUTION = 128
 
     raytracer = RayTracer(config=config)
 
+    rolling_arr = np.zeros(shape=(1, 5), dtype="float32")
+
     s = tf.constant(0.0)
-    pdf = tf.zeros(shape=(1, IMG_RESOLUTION, IMG_RESOLUTION, 1))
+    # pdf = tf.zeros(shape=(1, IMG_RESOLUTION, IMG_RESOLUTION, 1))
+    with open("out.csv", mode='a') as f:
+        with (pbar := tqdm(total=NUM_TO_PASS)):
+            while s.numpy() < NUM_TO_PASS:
+                full_arr, weight, n_rays = raytracer.trace_for_rays()
+                s += n_rays
+                data = np.hstack([weight.numpy(), full_arr.numpy()])
+                data = data[np.squeeze(weight.numpy() > 0)]
 
-    with (pbar := tqdm(total=NUM_TO_PASS)):
-        while s.numpy() < NUM_TO_PASS:
-            pdf, n_rays = raytracer.trace_for_pdf(pdf)
-            s += n_rays
-            pbar.update(n_rays.numpy())
-            if not tf.math.is_finite(n_rays).numpy():
-                print("i dont like this")
+                if rolling_arr.shape[0] > 10**6:
+                    np.savetxt(f, rolling_arr, delimiter=",", fmt="%.4f")
+                    rolling_arr = data
+                else:
+                    rolling_arr = np.vstack([rolling_arr, data])
+                pbar.update(n_rays.numpy())
+                if not tf.math.is_finite(n_rays).numpy():
+                    print("i dont like this")
 
-    plt.imshow(tf.cast(pdf / tf.reduce_max(pdf) * 256, tf.uint8).numpy()[0])
-    plt.show()
-
-    img = tf.io.encode_png(tf.reshape(tf.cast(pdf / tf.reduce_max(pdf) * 256, tf.uint8), (IMG_RESOLUTION, IMG_RESOLUTION, 1)))
-    tf.io.write_file("out.png", img)
+    # plt.imshow(tf.cast(pdf / tf.reduce_max(pdf) * 256, tf.uint8).numpy()[0])
+    # plt.show()
+    #
+    # img = tf.io.encode_png(tf.reshape(tf.cast(pdf / tf.reduce_max(pdf) * 256, tf.uint8),
+    #                                   (IMG_RESOLUTION, IMG_RESOLUTION, 1)))
+    # tf.io.write_file("out.png", img)
 
 
 if __name__ == "__main__":

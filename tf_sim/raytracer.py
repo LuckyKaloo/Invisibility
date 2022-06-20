@@ -76,7 +76,9 @@ class RayTracer:
         """
         Traces rays
 
-        :return: (n, 4 tensor): initial and final position of rays, (n,) tensor: weight of rays
+        :return: (n, 4 tensor): initial and final position of rays,
+        (n,) tensor: weight of rays,
+        scalar tensor: number of rays processed
         """
         initial_pos = self.source.generate_pos(self.config["batch_size"] * 10)
         phi_min, phi_max = self.lens.angle_bounds_phi_camera(
@@ -147,7 +149,7 @@ class RayTracer:
 
         n_rays = tf.reduce_sum(weight * intersect)
 
-        return full_arr, intersect, weight, n_rays
+        return full_arr, intersect * weight, n_rays
 
     @tf.function
     def trace_for_pdf(self, pdf):
