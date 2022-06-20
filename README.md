@@ -1,11 +1,4 @@
-why is there so much oop.
+there is a lot of oop for some reason. 
 
-Setup instructions:
-
-create new environment (conda/ venv)
-
-```
-pip install -r "requirements.txt"
-cd tf_sim
-python -m changing_lens
-```
+The tf.functions will trace each time the objects are changed. idk how much of a performance difference it would make.
+To make it faster change the object attributes to tf.Variable and use tf.Variable.assign

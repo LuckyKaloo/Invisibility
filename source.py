@@ -1,75 +1,62 @@
-import numpy as np
+import tensorflow as tf
 
 
-class ShapeSource:
-    def generate_pos(self):
-        # pass
+class Source:
+    def generate_pos(self, n_batches):
         raise NotImplementedError("To be implemented in subclass")
 
 
-class RectangleSource(ShapeSource):
+class RectangleSource(Source):
+    # x,y are center
     def __init__(self, x, y, z, w, h):
+        """
+        Creates a rectangle source
+        do not try to change these values after the __init__ has been called
+        it will not work trust me (unless you use tf.Variable's)
+
+        :param x: x value of center (float)
+        :param y: y value of center (float)
+        :param z: z position of plane (float)
+        :param w: width of plane (float)
+        :param h: height of plane (float)
+        """
         self.x = x
         self.y = y
         self.z = z
         self.w = w
         self.h = h
 
-    def generate_pos(self):
-        rand_x = (np.random.rand() - 0.5) * self.w + self.x
-        rand_y = (np.random.rand() - 0.5) * self.h + self.y
-        return np.array([rand_x, rand_y, self.z])
+        self.x_min = x - w / 2
+        self.x_max = x + w / 2
+        self.y_min = y - h / 2
+        self.y_max = y + h / 2
+        self.z = float(z)
+
+    def get_config(self):
+        return {
+            "x": self.x,
+            "y": self.y,
+            "z": self.z,
+            "w": self.w,
+            "h": self.h
+        }
+
+    @tf.function
+    def generate_pos(self, n_batches):
+        """
+        Generates a batch of rays
+
+        :param n_batches: batch size (int, ideally scalar tensor)
+        :return: A batch of rays
+        """
+        print("RectangeSource: generate_pos tracing")
+        x = tf.random.uniform(shape=(n_batches,), minval=self.x_min, maxval=self.x_max)
+        y = tf.random.uniform(shape=(n_batches,), minval=self.y_min, maxval=self.y_max)
+        z = tf.fill(dims=(n_batches,), value=self.z)
+        return tf.stack((x, y, z), axis=-1)
 
 
-class EllipseSource(ShapeSource):
-    def __init__(self, x, y, z, w, h):
-        self.x = x
-        self.y = y
-        self.z = z
-        self.w = w
-        self.h = h
-
-    def generate_pos(self):
-        while True:
-            rand_x_frac = (np.random.rand() - 0.5)
-            rand_y_frac = (np.random.rand() - 0.5)
-
-            if rand_x_frac * rand_x_frac + rand_y_frac + rand_y_frac < 1:
-                rand_x = rand_x_frac * self.w + self.x
-                rand_y = rand_y_frac * self.h + self.y
-
-                return np.array([rand_x, rand_y, self.z])
-
-
-class CrossSource(ShapeSource):
-    def __init__(self, x, y, z, w_h, h_h, w_v, h_v):
-        self.rect1 = RectangleSource(x, y, z, w_h, h_h)
-        self.rect2 = RectangleSource(x, y + (h_v + h_h) / 4, z, w_v, (h_v - h_h) / 2)
-        self.rect3 = RectangleSource(x, y - (h_v + h_h) / 4, z, w_v, (h_v - h_h) / 2)
-
-        area1 = w_h * h_h
-        area2 = area3 = w_v * (h_v - h_h) / 2
-        total_area = area1 + area2 + area3
-
-        self.thresh1 = area1 / total_area
-        self.thresh2 = area2 / total_area + self.thresh1
-
-    def generate_pos(self):
-        n = np.random.rand()
-        if n < self.thresh1:
-            return self.rect1.generate_pos()
-        elif n < self.thresh2:
-            return self.rect2.generate_pos()
-        else:
-            return self.rect3.generate_pos()
-
-
-class Laser:
-    def __init__(self, x, y, z, R):
-        self.ellipse = EllipseSource(x, y, z, 2 * R, 2 * R)
-
-    def generate_ray(self):
-        vec = np.array([0, 0, 1])
-        vec /= np.linalg.norm(vec)
-        return self.ellipse.generate_pos(), vec
-        
+# testing
+if __name__ == "__main__":
+    source = RectangleSource(0, 0, 0, 1, 1)
+    print(source.generate_pos(10))
