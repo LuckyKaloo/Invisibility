@@ -51,14 +51,6 @@ def main():
         "w": 0.8,
         "h": 0.5
     }
-    blocker_config = {
-        "class": RectangleBlocker,
-        "x": 0.1,
-        "y": 0.0,
-        "z": 0.0,
-        "w": 0.15,
-        "h": 0.01,
-    }
     config = {
         "batch_size": 1000,
         "rays_per_pos": int(2 * np.pi * 2 * 10**5 * 0.007),
@@ -66,7 +58,6 @@ def main():
         "lens": lens_config,
         "camera": camera_config,
         "source": source_config,
-        "blocker": blocker_config
     }
     NUM_TO_PASS = 10 ** 7
 
@@ -78,7 +69,7 @@ def main():
 
     s = tf.constant(0.0)
     # pdf = tf.zeros(shape=(1, IMG_RESOLUTION, IMG_RESOLUTION, 1))
-    with open("out.csv", mode='a') as f:
+    with open("out.csv", mode='w') as f:
         with (pbar := tqdm(total=NUM_TO_PASS)):
             while s.numpy() < NUM_TO_PASS:
                 full_arr, weight, n_rays = raytracer.trace_for_rays()
