@@ -31,6 +31,7 @@ class RectangleSource(Source):
         self.y_min = y - h / 2
         self.y_max = y + h / 2
         self.z = float(z)
+        print(self.x_max, self.x_min, self.y_max, self.y_min)
 
     def get_config(self):
         return {

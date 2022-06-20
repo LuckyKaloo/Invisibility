@@ -12,6 +12,7 @@
 import numpy as np
 from tqdm import tqdm
 import tensorflow as tf
+import matplotlib.pyplot as plt
 
 from tf_sim.blocker import RectangleBlocker
 from tf_sim.camera import Camera
@@ -52,11 +53,11 @@ def main():
     }
     blocker_config = {
         "class": RectangleBlocker,
-        "x": 0.0,
+        "x": 0.1,
         "y": 0.0,
         "z": 0.0,
         "w": 0.15,
-        "h": 0.05,
+        "h": 0.01,
     }
     config = {
         "batch_size": 1000,
@@ -83,6 +84,9 @@ def main():
             pbar.update(n_rays.numpy())
             if not tf.math.is_finite(n_rays).numpy():
                 print("i dont like this")
+
+    plt.imshow(tf.cast(pdf / tf.reduce_max(pdf) * 256, tf.uint8).numpy()[0])
+    plt.show()
 
     img = tf.io.encode_png(tf.reshape(tf.cast(pdf / tf.reduce_max(pdf) * 256, tf.uint8), (IMG_RESOLUTION, IMG_RESOLUTION, 1)))
     tf.io.write_file("out.png", img)

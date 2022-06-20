@@ -1,6 +1,4 @@
 import tensorflow as tf
-from tqdm import tqdm
-import numpy as np
 
 from tf_sim.blocker import RectangleBlocker
 from tf_sim.camera import Camera
@@ -20,7 +18,7 @@ def _gaussian_kernel(kernel_size, sigma, n_channels, dtype):
 @tf.function
 def apply_blur(img):
     blur = _gaussian_kernel(9, 5, 1, img.dtype)
-    img = tf.nn.conv2d(img, blur, [1, 1, 1, 1], 'SAME')
+    img = tf.nn.conv2d(img, blur, 1, 'SAME')
     return img
 
 
