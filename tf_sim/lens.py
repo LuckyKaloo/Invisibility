@@ -99,25 +99,30 @@ class LenticularLens:
         #          self.mu * (vec - tf.expand_dims(dot_in, axis=-1) * n_vec_in)
         dot_in = tf.reduce_sum(n_vec_in * vec, axis=-1)
 
-        theta_f_root = tf.sqrt(1 - self.mu * self.mu * (1 - dot_in * dot_in))
+        root_in = tf.sqrt(1 - self.mu * self.mu * (1 - dot_in * dot_in))
 
-        weights_1 = 1 - (tf.pow((dot_in - self.n * theta_f_root) / (dot_in + self.n * theta_f_root), 2)
-                         + tf.pow((theta_f_root - self.n * dot_in) / (theta_f_root + self.n * dot_in), 2)) / 2
+        weights_in = 1 - (tf.pow((dot_in - self.n * root_in) / (dot_in + self.n * root_in), 2)
+                          + tf.pow((root_in - self.n * dot_in) / (root_in + self.n * dot_in), 2)) / 2
 
-        vec_in = (tf.expand_dims(theta_f_root, axis=-1) * n_vec_in +
+        vec_in = (tf.expand_dims(root_in, axis=-1) * n_vec_in +
                   self.mu * (vec - tf.expand_dims(dot_in, axis=-1) * n_vec_in))
 
         # calculate the intersection of the ray inside the thing with the flat part
         n_vec_out = tf.constant([[0.0, 0.0, 1.0]])
         dot_out = vec_in[:, 2]
-        root = 1 - self.n * self.n * (1 - dot_out * dot_out)
 
-        vec_out = (tf.expand_dims(tf.sqrt(tf.nn.relu(root)), -1) * n_vec_out +
+        root_out = tf.sqrt(tf.nn.relu(1 - self.n * self.n * (1 - dot_out * dot_out)))
+
+        weights_out = 1 - (tf.pow((self.n * dot_out - root_out) / (self.n * dot_out + root_out), 2)
+                           + tf.pow((self.n * root_out - dot_out) / (self.n * root_out + dot_out), 2)) / 2
+
+        vec_out = (tf.expand_dims(root_out, -1) * n_vec_out +
                    self.n * (vec_in - tf.expand_dims(dot_out, -1) * n_vec_out))
 
         pos_out = pos_in + vec_in * tf.expand_dims((self.zo + self.t - self.f - pos_in[:, 2]) / vec_in[:, 2], -1)
 
-        return pos_out, vec_out, tf.cast(root >= 0, tf.float32) * weights_1
+        # return pos_out, vec_out, tf.cast(root_out >= 0, tf.float32) * weights
+        return pos_out, vec_out, weights_in * weights_out
 
     @tf.function
     def calc_m(self, yo, zo, yp, zp, r):
