@@ -10,6 +10,7 @@
 # import os
 #
 import numpy as np
+import pandas as pd
 from tqdm import tqdm
 import tensorflow as tf
 import matplotlib.pyplot as plt
@@ -70,7 +71,7 @@ def main():
     }
     NUM_TO_PASS = 10 ** 7
 
-    IMG_RESOLUTION = 32
+    IMG_RESOLUTION = 128
 
     raytracer = RayTracer(config=config)
 
@@ -78,21 +79,22 @@ def main():
 
     s = tf.constant(0.0)
     pdf = tf.zeros(shape=(1, IMG_RESOLUTION, IMG_RESOLUTION, 1))
+
     with open("out_18.csv", mode='w') as f:
         with (pbar := tqdm(total=NUM_TO_PASS)):
             while s.numpy() < NUM_TO_PASS:
                 # full_arr, weight, n_rays = raytracer.trace_for_rays()
                 pdf, n_rays = raytracer.trace_for_pdf(pdf)
                 s += n_rays
-                # data = np.hstack([weight.numpy(), full_arr.numpy()])
-                # data = data[np.squeeze(weight.numpy() > 0)]
-                #
                 # if rolling_arr.shape[0] > 10**6:
                 #     np.savetxt(f, rolling_arr, delimiter=",", fmt="%.4f")
                 #     rolling_arr = data
                 # else:
                 #     rolling_arr = np.vstack([rolling_arr, data])
                 pbar.update(n_rays.numpy())
+    #
+    # plt.imshow(pdf / np.max(pdf))
+    # plt.show()
 
     plt.imshow(tf.cast(pdf / tf.reduce_max(pdf) * 256, tf.uint8).numpy()[0])
     plt.show()

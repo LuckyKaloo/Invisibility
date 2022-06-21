@@ -159,7 +159,7 @@ class RayTracer:
                                           self.lens.w / h), tf.int32)
         # todo change this if lens is not square
 
-        binned = binned[2] + binned[3] * h
+        binned = binned[:, 0] + binned[:, 1] * h
         binned = tf.concat([binned, tf.range(h ** 2, dtype=tf.int32)], axis=0)
         values = tf.concat([
             weight,
@@ -168,6 +168,7 @@ class RayTracer:
         # todo this might become very slow for larger images
 
         binned = tf.clip_by_value(binned, 0, h ** 2 - 1)
+        values = tf.squeeze(values)
 
         idx = tf.argsort(binned)
         binned = tf.gather(binned, idx)
@@ -177,5 +178,5 @@ class RayTracer:
         segments = tf.unique(binned)[1]
         aggregated = tf.math.segment_sum(values, segments)
 
-        pdf = pdf + apply_blur(tf.reshape(aggregated, (1, h, w, 1)))
+        pdf = pdf + tf.reshape(aggregated, (1, h, w, 1))
         return pdf, n_rays
