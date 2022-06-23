@@ -1,9 +1,9 @@
 import tensorflow as tf
 
-from tf_sim.blocker import RectangleBlocker
-from tf_sim.camera import Camera
-from tf_sim.lens import LenticularLens
-from tf_sim.source import RectangleSource
+from blocker import RectangleBlocker
+from camera import Camera
+from lens import LenticularLens
+from source import RectangleSource
 
 
 def _gaussian_kernel(kernel_size, sigma, n_channels, dtype):
