@@ -56,7 +56,7 @@ class LenticularLens:
         :param vec: (n, 3) tensor
         :return: 2 (n, 3) tensors
         """
-        print("LenticularLens: refract tracing")
+        #print("LenticularLens: refract tracing")
         n = tf.shape(pos)[0]
 
         # getting intersection of ray and x-axis
@@ -136,7 +136,7 @@ class LenticularLens:
         :param r: scalar tensor
         :return: (n,) tensor
         """
-        print("LenticularLens: calc_m tracing")
+        #print("LenticularLens: calc_m tracing")
         return (yo - yp) / ((r - 1) * self.zo + zo - r * zp)
 
     @tf.function(input_signature=[tf.TensorSpec(shape=(None, 3))])
@@ -147,7 +147,7 @@ class LenticularLens:
         :param ray_pos: (n, 3) tensor
         :return: 2 (n,) tensors
         """
-        print("LenticularLens: angle_bounds_phi_theta tracing")
+        #print("LenticularLens: angle_bounds_phi_theta tracing")
         vec_c1 = self.c1 - ray_pos
         theta_max = tf.math.atan(vec_c1[:, 0] / vec_c1[:, 2])
 
@@ -164,7 +164,7 @@ class LenticularLens:
         :param ray_pos: (n, 3) tensor
         :return: 2 (n,) tensors
         """
-        print("LenticularLens: angle_bounds_phi_lens tracing")
+        #print("LenticularLens: angle_bounds_phi_lens tracing")
         vec_c1 = self.c1 - ray_pos
         phi_max = tf.math.atan(vec_c1[:, 1] / vec_c1[:, 2])
 
@@ -184,7 +184,7 @@ class LenticularLens:
         :param pinhole_pos: (3,) tensor
         :return: phi bounds (whatever phi is) (2 (n,) tensors)
         """
-        print("LenticularLens: angle_bound_phi_pinhole tracing")
+        #print("LenticularLens: angle_bound_phi_pinhole tracing")
         yo = ray_pos[:, 1]
         zo = ray_pos[:, 2]
         zp = pinhole_pos[2]
@@ -214,7 +214,7 @@ class LenticularLens:
         :param camera_rad: scalar tensor
         :return: 2 (n,) tensors
         """
-        print("LenticularLens: angle_bound_phi_camera tracing")
+        #print("LenticularLens: angle_bound_phi_camera tracing")
         phi_min_pupil, phi_max_pupil = self.angle_bounds_phi_pinhole(ray_pos, pupil_pos, pupil_rad)
         phi_min_camera, phi_max_camera = self.angle_bounds_phi_pinhole(ray_pos, camera_pos, camera_rad)
         phi_min_lens, phi_max_lens = self.angle_bounds_phi_lens(ray_pos)
