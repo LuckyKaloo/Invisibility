@@ -78,7 +78,7 @@ def sim(p_standard=None, R_standard=None):
                 "source": source_config,
                 "blocker": blocker_config
             }
-            NUM_TO_PASS = 10 ** 8
+            NUM_TO_PASS = 5 * 10 ** 7
 
             IMG_RESOLUTION = 256
 
