@@ -123,8 +123,8 @@ def main():
     p_standard_list = (0.00015776, 0.0014111)
     R_standard_list = (0.0001, 0.001232)
 
-    for p_standard in p_standard_list:
-        sim(p_standard=p_standard)
+#     for p_standard in p_standard_list:
+#         sim(p_standard=p_standard)
     for R_standard in R_standard_list:
         sim(R_standard=R_standard)
 
