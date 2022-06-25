@@ -31,7 +31,7 @@ class RectangleSource(Source):
         self.y_min = y - h / 2
         self.y_max = y + h / 2
         self.z = float(z)
-        print(self.x_max, self.x_min, self.y_max, self.y_min)
+#         print(self.x_max, self.x_min, self.y_max, self.y_min)
 
     def get_config(self):
         return {
@@ -50,7 +50,7 @@ class RectangleSource(Source):
         :param n_batches: batch size (int, ideally scalar tensor)
         :return: A batch of rays
         """
-        print("RectangeSource: generate_pos tracing")
+#         print("RectangeSource: generate_pos tracing")
         x = tf.random.uniform(shape=(n_batches,), minval=self.x_min, maxval=self.x_max)
         y = tf.random.uniform(shape=(n_batches,), minval=self.y_min, maxval=self.y_max)
         z = tf.fill(dims=(n_batches,), value=self.z)
