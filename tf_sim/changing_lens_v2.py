@@ -42,7 +42,7 @@ def sim(p_standard=None, R_standard=None):
                 "h": 0.09,
                 "R": R_standard if constant_R else p_standard / ratio,
                 "p": p_standard if constant_p else R_standard * ratio,
-                "t": 0.001,
+                "t": 0.003,
                 "n": 1.6357
             }
             camera_config = {
