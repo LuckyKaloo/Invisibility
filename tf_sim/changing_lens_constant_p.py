@@ -121,11 +121,13 @@ def sim(p_standard=None, R_standard=None):
 
 def main():
 #     p_standard_list = (0.00015776, 0.0014111)
-    p_standard_list = (0.0002)
-    R_standard_list = (0.0001, 0.001232)
+#     p_standard_list = (0.0002)
+#     R_standard_list = (0.0001, 0.001232)
 
-    for p_standard in p_standard_list:
-        sim(p_standard=p_standard)
+    sim(p_standard=0.0002)
+
+#     for p_standard in p_standard_list:
+#         sim(p_standard=p_standard)
 #     for R_standard in R_standard_list:
 #         sim(R_standard=R_standard)
 
