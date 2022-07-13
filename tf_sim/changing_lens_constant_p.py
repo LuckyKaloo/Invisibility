@@ -33,7 +33,7 @@ def sim(p_standard=None, R_standard=None):
         os.mkdir(file_root)
         print("made dir " + file_root)
 
-    for ratio in np.arange(0.6, 1.9, 0.1):
+    for ratio in np.arange(0.2, 0.6, 0.05):
         try:
             lens_config = {
                 "class": LenticularLens,
@@ -120,7 +120,8 @@ def sim(p_standard=None, R_standard=None):
 
 
 def main():
-    p_standard_list = (0.00015776, 0.0014111)
+#     p_standard_list = (0.00015776, 0.0014111)
+    p_standard_list = (0.0002)
     R_standard_list = (0.0001, 0.001232)
 
     for p_standard in p_standard_list:
