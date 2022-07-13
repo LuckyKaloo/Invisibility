@@ -4,11 +4,11 @@ from tqdm import tqdm
 import tensorflow as tf
 import matplotlib.pyplot as plt
 
-from tf_sim.blocker import RectangleBlocker
-from tf_sim.camera import Camera
-from tf_sim.lens import LenticularLens
-from tf_sim.raytracer import RayTracer
-from tf_sim.source import RectangleSource
+from blocker import RectangleBlocker
+from camera import Camera
+from lens import LenticularLens
+from raytracer import RayTracer
+from source import RectangleSource
 
 
 def main():
