@@ -72,7 +72,7 @@ def main():
         pdf = tf.zeros(shape=(1, IMG_RESOLUTION, IMG_RESOLUTION, 1))
 
         # with open("output/{ratio:.2f}.csv".format(ratio=np.round(ratio, 2)), mode='w') as f:
-        with (pbar := tqdm(total=NUM_TO_PASS)):
+        with tqdm(total=NUM_TO_PASS) as pbar:
             while s.numpy() < NUM_TO_PASS:
                 # full_arr, weight, n_rays = raytracer.trace_for_rays()
                 pdf, n_rays = raytracer.trace_for_pdf(pdf)
